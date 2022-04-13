@@ -1,0 +1,230 @@
+/* 
+
+							SIMPLYFYING SAS DATES PROBLEM 
+
+Learning Source Reference: Youtube 
+13 April 2022 
+
+*/
+
+/* 
+SAS does not understand the dates which we feed(input) and requires us to help it understand-- Done using INFORMATS
+SAS does not understand how to display dates(output) and requires the user to explicitly define the format in which we want the Output-- Done using formats */
+/*
+
+
+ _____________________________________________________________________________________________________________ */
+
+data test;
+aaj= today();
+run;
+/* O/P -- 22748 */
+/* Inference: SAS did not understand how to display the output stored in variable aaj and hence showed 22748 */
+
+data test;
+format aaj date9.;
+aaj=today();
+run;
+/* O/P -- 13APR2022 as expected */
+
+
+/* ________________________________________________________________________________________________________________ */
+
+/* Functions to extract useful parts of dates */
+data test;
+format aaj yest tomorrow date9.;
+aaj=today();
+yest= today()-1;
+
+day=day(aaj);
+month=month(aaj);
+year=year(aaj);
+QTR=qtr(aaj);
+weekday= weekday(aaj); /* Sunday is set to 1 by default */
+
+tomorrow=mdy(04,14,2022); /* Creates date by the input of month, date and year */
+run;
+
+/* _______________________________________________________________________________________________________________ */
+
+/* We input the dates manually */
+
+data test;
+input dat;
+cards;
+13/04/2022
+;
+run;
+
+/* O/P- Dot */
+/* Inference: SAS does not understand the datatype of the dat variable because of the presence of both numerics and special character. */
+/* Solution: Help SAS understand how to read the data using informat */
+
+data test;
+input dat;
+informat dat ddmmyy10.;
+cards;
+13/04/2022
+;
+run;
+
+/* O/P- 22748 (no of days from Jan 1 1960) */
+/* Inference: SAS now understands how to read the date but does not know how to display it in the O/P. */
+/* Solution: Use format statement to display the result in the desired format. */
+/* Note: The informat statement has to be same as the way you are describing the dat variable. */
+/* In the output variable you can display the date the way you want and can give any format. */
+
+data test;
+input dat;
+informat dat ddmmyy10.;
+format dat date9.;
+cards;
+13/04/2022
+;
+run;
+
+/* O/P -- 13APR2022 as expected */
+
+/* Note: Informat statement need not be sepearately defined in a new line it can be done while defineing the dat variable in the input statement. */
+
+data test;
+input dat ddmmyy10.;
+format dat date9.;
+cards;
+13/04/2022
+;
+run;
+/* O/P -- 13APR2022 as expected */
+/* ____________________________________________________________________________________________________________ */
+
+			/* Difference Between Dates-- INTCK FUNCTION */
+
+/* Difference between dates is found using INTCK function. Remember hack: CK Nayudu first Indian cricket captain made the difference in Indian cricket. */
+			
+/* SYNTAX : INTCK(interval, startdate, enddate, <method-optional>) */
+
+
+/* Lets calculate no of days left in my birthday this year. */
+
+data test;
+format aaj bday date9.;
+aaj=today();
+bday="08Sep2022"d ; /*Observe the way date is assigned to a variable*/
+
+days_left= intck('day',aaj,bday);
+months_left= intck('month',aaj,bday);
+
+run;
+
+/* O/P- 148 days, 5 months (excludes the current month) */
+
+/* Methods argument in intck is optional. It can take two values: */
+/* D- discrete-- includes the interval boundary */
+/* C- continuous -- excludes the interval boundary */
+/* If we dont put any method SAS by default choses the continuous method-- excludes the interval boundary */
+
+data test;
+format aaj bday date9.;
+aaj=today();
+bday="08Sep2022"d ; /*Observe the way date is assigned to a variable*/
+
+days_left= intck('day',aaj,bday);
+months_left_c= intck('month',aaj,bday,'c');
+months_left_d= intck('month',aaj,bday,'d');
+
+run;
+/* O/P---- months_left_c-4, months_left_d - 5 */
+
+/* ____________________________________________________________________________________________________________ */
+
+			/* Incrementing Dates-- INTNX FUNCTION */
+
+/* Incrementing dates by the given time interval can be done using Intnx function. Remember NX- Nexa carshowroom- moves forward/backward */
+
+/* SYNTAX: INTNX('interval', startfrom, increment,<'alignment') */
+
+/* Lets add 365 days to this years birthday and create a variable for next years birthday */
+
+data test;
+format bday next_bday next_bday2  date9.;
+bday="08Sep2022"d ;
+next_bday=intnx('day',bday,365);
+next_bday2=intnx('month',bday,12);
+run;
+/* O/P-- 08SEP2023 */
+
+
+/* Alignment argument is an optional argument which takes values: */
+/* B-- Beginning -- returned date is aligned to the beginning of the interval */
+/* M-- Middle-- returned date is aligned to the middle of the interval */
+/* E-- End-- returned date is aligned to the end of the interval */
+/* S--- Sameday-- returned date is aligned to the same day of the interval */
+
+data test;
+format bday next_bday next_bday2 next_bday3 date9.;
+bday="08Sep2022"d ;
+next_bday=intnx('month',bday,12,'b');
+next_bday2=intnx('month',bday,12,'e');
+next_bday3=intnx('month',bday,12,'m');
+run;
+/* O/P - 01SEP2023,30SEP2023,15SEP2023 */
+
+/* ___________________________________________________________________________________________________________ */
+
+/* DATE FORMAT USING PUT FUNCTION */
+
+/* Instead of writing a format statement you can define SAS date formats using put statement which helps SAS to convert into character and then display. */
+data test;
+bday="08Sep2022"d ;
+var1=put(bday,date9.);
+var2=put(bday,ddmmyy10.);
+var3=put(bday, ddmmyyb10.);
+var4=put(bday, ddmmyyc10.);
+run;
+
+/* _____________________________________________________________________________________________________________ */
+
+/* SUBSETTING DATA BASED ON DATES */
+
+/* Lets create a dataset. */
+
+data test1;
+input Qty sold_dt;
+informat sold_dt date9.;
+format sold_dt date9.;
+cards;
+65 13APR2023
+85 14APR2023
+42 15APR2023
+68 16APR2023
+75 17APR2023
+54 18APR2023
+62 19APR2023
+57 20APR2023
+98 21APR2023
+;
+run;
+
+/* Subset the data for quantity sold after 17Apr2023 */
+data test2;
+set test1;
+where sold_dt>'17APR2023'd;
+run;
+/* ______________________________________________________________________________________________ */
+
+						/*DATEPART FUNCTION */
+
+/* Generally in databases the date variable is stored as datetime function for example sld_date='13apr22:8:45'dt; */
+/* To extract the date part out of this function which has a combination of date and time function we use datepart */
+
+data test;
+
+sld_date='13apr22:8:45'd;
+var_dat=datepart(sld_date);
+var_time=timepart(sld_date);
+
+format var_dat date9. var_time hhmm.;
+
+run;
+
+/* ___________________________________________________________________________________________________ */
