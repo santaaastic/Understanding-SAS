@@ -1,0 +1,166 @@
+/* 									UNDERSTANDING ARRAYS IN SAS WITH DO LOOPS */
+
+/* What?-- Group of similar variables already defined in data step */
+/* Why?-- Clubbing/Seperating a group of variables for easy data manipulation. Repetitive data can be handled easily with min coding. */
+
+/* Basic Usage: */
+
+/*  1 mile = 1.6 km, imagine we have 5 mile variables - mile1, mile2, mile3, mile4, mile5 */
+
+/* Raw data setup */
+data raw;
+input mile1 mile2 mile3 mile4 mile5;
+cards;
+25 17 68 84 79
+;
+run;
+
+/* Conversion into km basic code in a noob way without arrays*/
+data noob;
+set raw;
+milekm_1=mile1*1.6;
+milekm_2=mile2*1.6;
+milekm_3=mile3*1.6;
+milekm_4=mile4*1.6;
+milekm_5=mile5*1.6;
+run;
+
+/* Using Arrays and simplifying */
+/* Defining Array:  */
+/* Syntax--> array <arrayname> {arraysize} var1-varn */
+/* If arraysize is set to * so that we dont have to write the size explicitly-- SAS automatically writes */
+/* Here arrayname is called the array reference as it helps us in referencing variables var1-varn */
+
+
+data usingArr;
+set raw;
+
+array arr_mile {*} mile1-mile5;
+array arr_km {*} milekm_1-milekm_5;
+
+do i=1 to 5;
+arr_km{i}=1.6*arr_mile{i};
+end;
+
+run;
+
+
+/* ________________________________________________________________________ */
+
+/* Intermediate and advanced usage */
+/* Raw data setup */
+
+data raw;
+input mile1 mile2 mile3 car1 $ car2 $;
+cards;
+25 17 68 Alto Swift
+65 24 38 WagonR Zen
+11 14 12 Audi BMW
+;
+run;
+
+/* Create a variable longrun and set it to 1 if the car travels more than 25miles  */
+
+/* We need to iterate a loop on mile1,mile2,mile3 and check the condition and set the flag. */
+data play;
+set raw;
+format longrun $1.;
+
+array a {*} mile1-mile3;  /* Creates an array named "a" of dynamic length *, the array variables are set to miles since we have to iterate over mile variables- mile1-mile3 */
+do i=1 to 3;
+if a{i}>25 then longrun='1' ;else longrun='0';
+end; 
+
+run; 
+
+/* Since we iterate over all numeric variables mile1, mile2, mile3 we could have used _numeric_ insted of mile1-mile3 like below: */
+/* In this case automatically array is set for numeric variables and we need not write the upper limit of i  in do loop using dim(a) */
+
+data play;
+set raw;
+format longrun $1.;
+
+array a {*} _numeric_; 
+do i=1 to dim(a);
+if a{i}>25 then longrun='1' ;else longrun='0';
+end; 
+
+run; 
+/* __________________________________________________________________________________________________ */
+
+/* Similarly for character variables we can use _character_ */
+/* Task: Extract the first letter of cars and store it in a new variable abbvr */
+
+data play2;
+set raw;
+format abbvr1 $1. abbvr2 $1.;
+
+array a {*} _character_;
+do i=1 to dim(a);
+abbvr1=substr(a[i],1);
+abbvr2=substr(a[i],1);
+/* ?????????????????????????????????????????????????????????????????????????????????????????????????????????? */
+end;
+
+run;
+
+/* Task: Multiply each of miles by 1.6 to convert them in km. Store in seperate variable km1-km3 */
+
+data play3;
+set raw;
+array a{*} _numeric_;
+array km{*} km1-km3;
+array m{3} _temporary_(1.6,1.6,1.6);
+do i=1 to dim(a);
+km[i]=a[i]*m[i];
+end;
+run;
+
+/* Task: Calculate percentage increase in the miles  */
+
+data play4;
+set raw;
+array a{*} _numeric_;
+array diff{2};
+array percent{2};
+
+do i=1 to 2;
+diff[i]=a[i+1]-a[i];
+percent[i]=diff[i]/a[i];
+end;
+
+run;
+
+/* __________________________________________________________________________________________________________ */
+
+/* Task: Calculate the mean miles */
+/* OF function usage */
+data mean;
+set raw;
+array a{*} _numeric_;
+mean_mil= mean(of a{*});
+min_miles=min(of a{*});
+max_miles=max(of a{*});
+run;
+
+/* ____________________________________________________________________________________________________ */
+
+/* DO OVER LOOP */
+/* When?-- Used when the index i is not required for the loop operation. */
+
+data test;
+set raw;
+array a _numeric_;
+do over a;
+if a>15 then flag="Long Distance";
+else flag="City";
+end;
+run;
+
+
+
+
+
+
+
+
