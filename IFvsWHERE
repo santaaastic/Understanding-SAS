@@ -1,0 +1,96 @@
+/* UNDERSTANDING DIFFERENCE BETWEEN IF AND WHERE STATEMENTS AND EXECUTION TIME DIFFERENCES */
+
+/* What?- If and where statements are used for subsetting data. */
+/* Why?- It is important to understand when to where which of these statements as they have impacts on the execution time and they can be used selectively in some scenaario */
+/* The execution time difference increases as the size of datasets increase */
+/* Where statement IS MORE EFFICIENT than if statement because it subsets the data first and then reads it */
+
+/* How?- Lets try subsetting data using if and where statemets and check the time lapse. */
+
+/* Setting up raw data */
+data raw;
+input acc_no $7. dispute $10.; 
+datalines;
+123456 Billing       
+987587 Pay
+988788 Deadline 
+599455 Test   
+656564 Pending
+654789 Court
+544879 OnHold
+989789 Deadline
+897867 Deadline
+546879 Test
+546787 Deadline
+467879 Pay
+487879 Test       
+  ;
+run;
+
+/* Task: Subset the acc_no which are flagged as Deadline using if and where statements seperately. */
+data usingIf;
+set raw;
+if dispute="Deadline" then Output;
+run;
+
+data whereop(where=(dispute="Deadline"));
+set raw;
+run;
+
+/* Lets try to place timestamps */
+
+%let launchTime = %sysfunc(time());
+data usingIf;
+set raw;
+if dispute="Deadline" then Output;
+run;
+%let landTime = %sysfunc(time());
+%let timeTaken = %sysevalf(&landTime.-&launchTime.);
+%put &timeTaken.;
+
+/*  Trial 1: 0.00484490390226 */
+/*  Trial 2: 0.00536084180203 */
+/*  Trial 3: 0.0044620037006 */
+
+
+
+
+/* _________________________________________________________ */
+
+%let launchTime = %sysfunc(time());
+data whereop(where=(dispute="Deadline"));
+set raw;
+run;
+%let landTime = %sysfunc(time());
+%let timeTaken = %sysevalf(&landTime.-&launchTime.);
+%put &timeTaken.;
+
+/* Trial 1: 0.00454998009809 */
+/* Trial 1: 0.00433802609768 */
+/* Trial 1: 0.0048000812967 */
+
+
+
+
+
+/* Source: Listen Data */
+
+/* But though we know where is more efficient we cannot use it everywhere. */
+
+/* Cases in which IF supremacy exists: */
+/* 1. Entering data using input statement. */
+/* 2. Multiple conditions  */
+/* 3. Newly created variables in the same dataset. */
+/* 4. Automatic Variables : _N_, first., last. */
+
+/* Cases in which WHERE supremacy exists */
+
+/* 1. Merging datasets in data step. */
+/* 2. With Proc statements */
+/* 3. As an option statement */
+
+/* Cited from : ListenData: */
+
+/* "The where clause sends only those records that meet condition to PDV, the IF statement sends */
+/*  all the records to PDV and removes the records that do not meet condition before they  */
+/*  get sent to the output buffer." */
